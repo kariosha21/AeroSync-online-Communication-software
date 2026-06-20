@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AeroSync Call Room | P2P E2EE Collaboration</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+  <!-- PASSWORD/DECRYPTION KEY MODAL FOR INCOMING HASH LINKS -->
+  <div id="decrypt-modal" class="modal-overlay hidden">
+    <div class="glass-container modal-card">
+      <div class="modal-card-icon">
+        <i class="fa-solid fa-key"></i>
+      </div>
+      <h2>Enter Room Key</h2>
+      <p>This room requires a password key to derive the End-to-End Encryption (E2EE) key. Without it, you cannot view shared files or messages.</p>
+      
+      <form id="decrypt-room-form">
+        <div class="auth-form-group">
+          <label for="modal-room-key">Room Encryption Password</label>
+          <input type="password" id="modal-room-key" class="glass-input" placeholder="Enter matching password" required>
+        </div>
+        <button type="submit" class="btn btn-teal" style="width: 100%;">
+          Unlock & Connect <i class="fa-solid fa-lock-open"></i>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MAIN ROOM INTERFACE -->
+  <div class="room-wrapper">
+
+    <!-- Center/Left Main Collaboration Space -->
+    <div class="room-main">
+      
+      <!-- Top Header -->
+      <header class="room-header">
+        <div class="room-info">
+          <div class="logo" style="font-size: 1.3rem;">
+            <i class="fa-solid fa-cloud-bolt"></i> AeroSync
+          </div>
+          <div class="divider" style="height: 20px;"></div>
+          <span class="room-title">Room:</span>
+          <div id="room-id-badge" class="room-id-badge" title="Click to copy room link">
+            <span>Loading...</span> <i class="fa-solid fa-copy"></i>
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 15px;">
+          <!-- E2EE Shield Indicator -->
+          <div id="e2ee-status" class="user-profile-badge" style="cursor: pointer; border-color: rgba(6, 214, 160, 0.3); background: rgba(6, 214, 160, 0.04);">
+            <i class="fa-solid fa-shield-halved" style="color: var(--accent-teal);"></i>
+            <span style="font-size: 0.85rem; color: var(--accent-teal); font-weight: 500;">E2E Encrypted</span>
+          </div>
+
+          <div class="user-profile-badge" style="background: rgba(255, 255, 255, 0.04);">
+            <div class="avatar-circle" id="local-avatar">U</div>
+            <span id="local-username">Username</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Video Call Grid and Canvas Container -->
+      <div id="collaboration-space" style="flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative;">
+        
+        <!-- Video Grid (Default view) -->
+        <div id="video-grid" class="video-grid-container">
+          <!-- Video Cards will be inserted here dynamically -->
+        </div>
+
+        <!-- Whiteboard Canvas Space (Hidden by default, overlay style) -->
+        <div id="whiteboard-space" class="whiteboard-container" style="display: none;">
+          <div class="whiteboard-canvas-wrapper">
+            <canvas id="whiteboard-canvas"></canvas>
+          </div>
+          <!-- Whiteboard Controls Bar -->
+          <div class="whiteboard-toolbar">
+            <div class="toolbar-row">
+              <div class="color-palette">
+                <div class="color-option selected" style="background: #ffffff;" data-color="#ffffff"></div>
+                <div class="color-option" style="background: #f72585;" data-color="#f72585"></div>
+                <div class="color-option" style="background: #4cc9f0;" data-color="#4cc9f0"></div>
+                <div class="color-option" style="background: #06d6a0;" data-color="#06d6a0"></div>
+                <div class="color-option" style="background: #ffd166;" data-color="#ffd166"></div>
+                <div class="color-option" style="background: #9d4edd;" data-color="#9d4edd"></div>
+              </div>
+              <div class="thickness-slider-container">
+                <label for="brush-size">Size</label>
+                <input type="range" id="brush-size" class="thickness-slider" min="2" max="25" value="5">
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <button id="btn-eraser" class="btn btn-secondary" style="padding: 8px 12px; font-size: 0.85rem;" title="Eraser">
+                  <i class="fa-solid fa-eraser"></i> Eraser
+                </button>
+                <button id="btn-clear-canvas" class="btn btn-danger" style="padding: 8px 12px; font-size: 0.85rem;" title="Clear Canvas">
+                  <i class="fa-solid fa-trash-can"></i> Clear
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Bottom Conference Controls Bar -->
+      <footer class="room-controls">
+        <div class="room-controls-group">
+          <button id="btn-toggle-mic" class="btn-icon active" title="Toggle Microphone">
+            <i class="fa-solid fa-microphone"></i>
+          </button>
+          <button id="btn-toggle-cam" class="btn-icon active" title="Toggle Camera">
+            <i class="fa-solid fa-video"></i>
+          </button>
+          <button id="btn-toggle-screen" class="btn-icon" title="Share Screen">
+            <i class="fa-solid fa-desktop"></i>
+          </button>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="room-controls-group">
+          <button id="btn-toggle-whiteboard" class="btn-icon" title="Toggle Whiteboard">
+            <i class="fa-solid fa-chalkboard"></i>
+          </button>
+          <button id="btn-toggle-chat" class="btn-icon" title="Toggle Chat Panel">
+            <i class="fa-solid fa-comments"></i>
+          </button>
+          <button id="btn-toggle-participants" class="btn-icon" title="Toggle Participants Panel">
+            <i class="fa-solid fa-users"></i>
+          </button>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="room-controls-group">
+          <button id="btn-leave-room" class="btn btn-danger" style="border-radius: 30px; font-weight: 600; padding: 12px 28px;">
+            Leave Call <i class="fa-solid fa-phone-slash" style="margin-left: 5px;"></i>
+          </button>
+        </div>
+      </footer>
+
+    </div>
+
+    <!-- Right Sidebar Drawer (Contains Chat & Participants) -->
+    <aside id="room-sidebar" class="room-sidebar collapsed">
+      
+      <div class="sidebar-header">
+        <div class="sidebar-title">
+          <i id="sidebar-title-icon" class="fa-solid fa-comments"></i>
+          <span id="sidebar-title-text">Room Chat</span>
+        </div>
+        <button id="btn-close-sidebar" class="sidebar-close">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- TAB CONTENT: CHAT & FILE SHARE -->
+      <div id="sidebar-chat-content" class="chat-container">
+        <div class="encryption-status-banner">
+          <i class="fa-solid fa-shield-halved"></i>
+          <span>Messages & files are client-side encrypted (E2EE).</span>
+        </div>
+
+        <div id="chat-messages" class="messages-list"></div>
+
+        <div id="file-preview" class="file-upload-preview hidden">
+          <div class="file-info">
+            <i class="fa-solid fa-file-shield" style="color: var(--accent-purple-light); font-size: 1.1rem;"></i>
+            <span id="file-preview-name" style="max-width: 180px; overflow: hidden; text-overflow: ellipsis;">file.txt</span>
+            <span id="file-preview-size" style="color: var(--text-muted); font-size: 0.75rem;">(0 KB)</span>
+          </div>
+          <button id="btn-cancel-file" style="background: transparent; border: none; color: var(--accent-red); cursor: pointer;">
+            <i class="fa-solid fa-circle-xmark"></i>
+          </button>
+        </div>
+
+        <div class="chat-input-area">
+          <form id="chat-form" class="chat-input-form">
+            <input type="file" id="file-input" style="display: none;">
+            <button type="button" id="btn-trigger-file" class="btn btn-secondary" style="padding: 12px; border-radius: 12px;" title="Attach File (E2EE)">
+              <i class="fa-solid fa-paperclip"></i>
+            </button>
+            <input type="text" id="chat-input-text" class="glass-input" placeholder="Type encrypted message..." autocomplete="off">
+            <button type="submit" class="btn btn-primary" style="padding: 12px 18px; border-radius: 12px;">
+              <i class="fa-solid fa-paper-plane"></i>
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- TAB CONTENT: PARTICIPANTS LIST -->
+      <div id="sidebar-participants-content" class="participants-container" style="display: none;">
+        <div class="participant-item" style="border-color: var(--accent-purple-glow);">
+          <div class="participant-user-info">
+            <div class="avatar-circle" style="background: linear-gradient(135deg, var(--accent-purple) 0%, var(--accent-pink) 100%);" id="p-local-avatar">U</div>
+            <span class="participant-name" id="p-local-username">You</span>
+          </div>
+          <span class="participant-role-badge">Host</span>
+        </div>
+
+        <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; margin-top: 15px; margin-bottom: 5px; font-weight: 600; letter-spacing: 0.05em;">
+          Peers Connected
+        </div>
+        
+        <div id="peer-participants-list" style="display: flex; flex-direction: column; gap: 10px;"></div>
+      </div>
+
+    </aside>
+
+  </div>
+
+  <div id="toast" class="toast-notification">
+    <i id="toast-icon" class="fa-solid fa-check"></i>
+    <span id="toast-message">Action completed successfully.</span>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/crypto-helper.js"></script>
+  <script src="js/webrtc-manager.js"></script>
+  <script src="js/whiteboard.js"></script>
+  <script src="js/room-ui.js"></script>
+</body>
+</html>
