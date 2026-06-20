@@ -1,0 +1,108 @@
+app.get('/api/profile', authenticateToken, (req, res) => {
+  db.get(`SELECT id, username, email, created_at FROM users WHERE id = ?`, [req.user.id], (err, user) => {
+    if (err) return res.status(500).json({ error: 'Database error' });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json(user);
+  });
+});
+
+// Catch-all route to serve SPA files if requested
+app.get('/room/*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'room.html'));
+});
+
+// --- SOCKET.IO SIGNALLING & COLLABORATION ---
+
+// Store active users in rooms
+// Structure: { roomId: { socketId: { username } } }
+const rooms = {};
+
+io.on('connection', (socket) => {
+  console.log(`Socket connected: ${socket.id}`);
+
+  socket.on('join-room', ({ roomId, username }) => {
+    socket.join(roomId);
+    
+    if (!rooms[roomId]) {
+      rooms[roomId] = {};
+    }
+    rooms[roomId][socket.id] = { username };
+
+    console.log(`User ${username} (${socket.id}) joined room: ${roomId}`);
+
+    // Notify other users in the room that a new peer joined
+    socket.to(roomId).emit('user-joined', {
+      socketId: socket.id,
+      username: username
+    });
+
+    // Send the current list of participants in this room to the new user
+    const participants = Object.keys(rooms[roomId])
+      .filter(id => id !== socket.id)
+      .map(id => ({ socketId: id, username: rooms[roomId][id].username }));
+    
+    socket.emit('room-users', participants);
+  });
+
+  // Signaling relay: SDP Offer
+  socket.on('sdp-offer', ({ targetSocketId, offer }) => {
+    io.to(targetSocketId).emit('sdp-offer', {
+      senderSocketId: socket.id,
+      offer: offer
+    });
+  });
+
+  // Signaling relay: SDP Answer
+  socket.on('sdp-answer', ({ targetSocketId, answer }) => {
+    io.to(targetSocketId).emit('sdp-answer', {
+      senderSocketId: socket.id,
+      answer: answer
+    });
+  });
+
+  // Signaling relay: ICE Candidates
+  socket.on('ice-candidate', ({ targetSocketId, candidate }) => {
+    io.to(targetSocketId).emit('ice-candidate', {
+      senderSocketId: socket.id,
+      candidate: candidate
+    });
+  });
+
+  // Fallback signaling or broadcast chat messages (e.g. before E2EE channel established)
+  socket.on('chat-message', ({ roomId, message }) => {
+    socket.to(roomId).emit('chat-message', {
+      senderSocketId: socket.id,
+      message: message
+    });
+  });
+
+  // Handle user disconnect
+  socket.on('disconnect', () => {
+    console.log(`Socket disconnected: ${socket.id}`);
+    
+    // Find room the user was in
+    for (const roomId in rooms) {
+      if (rooms[roomId][socket.id]) {
+        const username = rooms[roomId][socket.id].username;
+        delete rooms[roomId][socket.id];
+        
+        // If room is empty, delete it
+        if (Object.keys(rooms[roomId]).length === 0) {
+          delete rooms[roomId];
+        } else {
+          // Notify others in room
+          socket.to(roomId).emit('user-left', {
+            socketId: socket.id,
+            username: username
+          });
+        }
+        break;
+      }
+    }
+  });
+});
+
+// Start Server
+server.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});
