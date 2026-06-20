@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AeroSync | Secure Collaboration & Video Conferencing</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+  <!-- AUTHENTICATION VIEW -->
+  <div id="auth-view" class="auth-wrapper">
+    <div class="glass-container auth-card">
+      
+      <div class="auth-header">
+        <div class="logo" style="justify-content: center; margin-bottom: 12px;">
+          <i class="fa-solid fa-cloud-bolt"></i> AeroSync
+        </div>
+        <p id="auth-subtitle">Secure, Real-Time Collaboration & E2EE Calling</p>
+      </div>
+
+      <form id="login-form">
+        <div class="auth-form-group">
+          <label for="login-email">Email Address</label>
+          <input type="email" id="login-email" class="glass-input" placeholder="e.g. alex@example.com" required autocomplete="email">
+        </div>
+        <div class="auth-form-group">
+          <label for="login-password">Password</label>
+          <input type="password" id="login-password" class="glass-input" placeholder="••••••••" required autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">
+          Sign In <i class="fa-solid fa-arrow-right-to-bracket"></i>
+        </button>
+      </form>
+
+      <form id="signup-form" style="display: none;">
+        <div class="auth-form-group">
+          <label for="signup-username">Username</label>
+          <input type="text" id="signup-username" class="glass-input" placeholder="e.g. alex_ninja" required autocomplete="username">
+        </div>
+        <div class="auth-form-group">
+          <label for="signup-email">Email Address</label>
+          <input type="email" id="signup-email" class="glass-input" placeholder="e.g. alex@example.com" required autocomplete="email">
+        </div>
+        <div class="auth-form-group">
+          <label for="signup-password">Password</label>
+          <input type="password" id="signup-password" class="glass-input" placeholder="Min. 8 characters" required autocomplete="new-password">
+        </div>
+        <button type="submit" class="btn btn-teal" style="width: 100%; margin-top: 10px;">
+          Create Account <i class="fa-solid fa-user-plus"></i>
+        </button>
+      </form>
+
+      <div class="auth-footer">
+        <span id="auth-toggle-text">Don't have an account? </span>
+        <a href="#" id="auth-toggle-link" class="auth-link">Sign Up</a>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- DASHBOARD / LOBBY VIEW -->
+  <div id="dashboard-view" class="dashboard-wrapper" style="display: none;">
+    
+    <header class="dashboard-nav">
+      <div class="logo">
+        <i class="fa-solid fa-cloud-bolt"></i> AeroSync
+      </div>
+      <div class="user-profile-badge">
+        <div class="avatar-circle" id="user-avatar">U</div>
+        <span id="user-display-name">Username</span>
+        <button id="btn-logout" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.85rem; border-radius: 8px; margin-left: 8px;">
+          <i class="fa-solid fa-right-from-bracket"></i> Logout
+        </button>
+      </div>
+    </header>
+
+    <main class="dashboard-grid">
+      
+      <div class="glass-container dashboard-card">
+        <div>
+          <div style="font-size: 2rem; color: var(--accent-purple); margin-bottom: 20px;">
+            <i class="fa-solid fa-circle-plus"></i>
+          </div>
+          <h2>Create New Room</h2>
+          <p>Instantly establish a secure, collaborative workspace. Generate a private link and set a local password to enable End-to-End Encryption (E2EE) for chats and file sharing.</p>
+        </div>
+        
+        <form id="create-room-form">
+          <div class="auth-form-group">
+            <label for="create-room-key">Room Encryption Password</label>
+            <input type="password" id="create-room-key" class="glass-input" placeholder="Used client-side for E2EE" required>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width: 100%;">
+            Create & Enter Room <i class="fa-solid fa-plus"></i>
+          </button>
+        </form>
+      </div>
+
+      <div class="glass-container dashboard-card">
+        <div>
+          <div style="font-size: 2rem; color: var(--accent-teal); margin-bottom: 20px;">
+            <i class="fa-solid fa-right-to-bracket"></i>
+          </div>
+          <h2>Join Existing Room</h2>
+          <p>Join a peer room by entering its Room ID. Ensure you enter the correct Room Encryption Password to decrypt shared media and chats.</p>
+        </div>
+
+        <form id="join-room-form">
+          <div class="auth-form-group">
+            <label for="join-room-id">Room ID</label>
+            <input type="text" id="join-room-id" class="glass-input" placeholder="e.g. 550e8400-e29b-41d4-a716-446655440000" required>
+          </div>
+          <div class="auth-form-group">
+            <label for="join-room-key">Room Encryption Password</label>
+            <input type="password" id="join-room-key" class="glass-input" placeholder="Must match the room password" required>
+          </div>
+          <button type="submit" class="btn btn-teal" style="width: 100%;">
+            Connect to Room <i class="fa-solid fa-network-wired"></i>
+          </button>
+        </form>
+      </div>
+
+    </main>
+
+    <footer style="margin-top: auto; color: var(--text-muted); font-size: 0.85rem; text-align: center;">
+      <p><i class="fa-solid fa-shield-halved" style="color: var(--accent-teal);"></i> Connections are peer-to-peer and secured. Encryption keys are never shared with the server.</p>
+    </footer>
+  </div>
+
+  <div id="toast" class="toast-notification">
+    <i id="toast-icon" class="fa-solid fa-check"></i>
+    <span id="toast-message">Action completed successfully.</span>
+  </div>
+
+  <script src="js/auth.js"></script>
+</body>
+</html>
